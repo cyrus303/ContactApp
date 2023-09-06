@@ -46,10 +46,40 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const data = req.body;
-  console.log(data);
-  contactList.push(data);
-  res.sendStatus(200);
+  const reqData = req.body;
+
+  // Read the existing data from the JSON file
+  fs.readFile(JsonPath, 'utf8', (readErr, fileData) => {
+    if (readErr) {
+      console.error('Error reading the file:', readErr);
+      return res.status(500).send('Error reading the file');
+    }
+
+    try {
+      let myObject = JSON.parse(fileData);
+
+      // Ensure myObject is an array or initialize it as an empty array
+      if (!Array.isArray(myObject)) {
+        myObject = [];
+      }
+
+      myObject.push(reqData);
+
+      // Write the updated data back to the JSON file
+      fs.writeFile(JsonPath, JSON.stringify(myObject), (writeErr) => {
+        if (writeErr) {
+          console.error('Error writing to the file:', writeErr);
+          return res.status(500).send('Error writing to the file');
+        }
+
+        console.log('New data added');
+        res.status(201).send(reqData);
+      });
+    } catch (parseErr) {
+      console.error('Error parsing JSON data:', parseErr);
+      res.status(400).send('Invalid JSON data');
+    }
+  });
 });
 
 module.exports = router;
